@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>華語生字學習平台</title>
+  <title>Mandarin - 教師管理專區</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,8 +14,8 @@
 
   <!-- 標題列 -->
   <header class="text-center mb-8">
-    <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight">華語生字學習卡平台</h1>
-    <p class="text-stone-500 text-sm mt-1.5">雲端教材即時同步 · 隨選隨聽發音</p>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight">Mandarin 教師管理專區</h1>
+    <p class="text-stone-500 text-sm mt-1.5">雲端教材編輯 · 錄音發布 · 字卡管理</p>
   </header>
 
   <!-- 教師建卡與錄音區塊 -->
@@ -72,7 +72,7 @@
           </button>
           <audio id="audioPreview" controls class="h-8 max-w-[200px] hidden"></audio>
         </div>
-        <p id="recordStatus" class="text-[11px] text-stone-400 mt-1.5">點擊開始錄音（瀏覽器會詢問麥克風存取權）</p>
+        <p id="recordStatus" class="text-[11px] text-stone-400 mt-1.5">點擊開始錄音（需允許麥克風權限）</p>
       </div>
 
       <button type="submit" id="submitBtn" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold rounded-lg text-sm shadow transition disabled:opacity-50">
@@ -81,12 +81,12 @@
     </form>
   </section>
 
-  <!-- 學生學習卡片清單 -->
+  <!-- 現有字卡列表區塊（支援移除） -->
   <main class="max-w-5xl w-full">
     <div class="flex items-center justify-between mb-4 px-1">
       <h2 class="text-lg font-bold text-stone-800 flex items-center gap-2">
         <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
-        生字教材庫
+        現有教材管理
       </h2>
       <button onclick="loadFlashcards()" class="text-xs px-3 py-1 bg-white hover:bg-stone-100 text-stone-600 rounded-lg border border-stone-200 shadow-sm transition">
         重新整理
@@ -97,7 +97,7 @@
     <div id="loading" class="text-center text-stone-400 py-12 text-sm flex flex-col items-center justify-center gap-2">
       <svg class="animate-spin h-6 w-6 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" stroke-line="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <path class="opacity-75" fill="currentColor" stroke-linecap="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
       <span>正在讀取 Google 雲端教材...</span>
     </div>
@@ -111,7 +111,7 @@
 
   <script>
     // ==========================================
-    // ⚠️ 請替換為您的 Google Apps Script 網頁應用程式網址
+    // ⚠️ 請填入您的 Google Apps Script 網頁應用程式網址
     // ==========================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
 
@@ -127,7 +127,6 @@
       }, 3500);
     }
 
-    // 擷取 Google Drive 檔案 ID
     function extractDriveId(urlOrId) {
       if (!urlOrId) return '';
       const str = String(urlOrId).trim();
@@ -135,13 +134,12 @@
       return match ? match[0] : str;
     }
 
-    // 圖片直連轉換
     function parseDriveImageUrl(rawInput) {
       const fileId = extractDriveId(rawInput);
       return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
     }
 
-    // --- 錄音功能實作 ---
+    // --- 錄音功能 ---
     let mediaRecorder;
     let audioChunks = [];
     let recordedAudioBlob = null;
@@ -198,7 +196,7 @@
       });
     }
 
-    // --- 表單送出至 Google Apps Script ---
+    // --- 新增字卡 ---
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
@@ -257,6 +255,41 @@
       }
     });
 
+    // --- 移除字卡功能 ---
+    async function deleteCard(card, btnEl) {
+      const confirmDelete = confirm(`確定要移除字卡「${card.hanzi}」嗎？\n此動作將一併從試算表與雲端硬碟中刪除。`);
+      if (!confirmDelete) return;
+
+      const cardEl = btnEl.closest('.card-item');
+      btnEl.disabled = true;
+      btnEl.innerText = '刪除中...';
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'delete',
+            rowIndex: card.rowIndex
+          })
+        });
+
+        showToast(`已成功移除字卡「${card.hanzi}」`);
+        if (cardEl) {
+          cardEl.remove();
+        }
+        // 延遲刷新清單以確保最新索引一致
+        setTimeout(loadFlashcards, 1500);
+
+      } catch (err) {
+        console.error('刪除失敗：', err);
+        showToast('移除失敗，請稍後再試', true);
+        btnEl.disabled = false;
+        btnEl.innerText = '🗑️ 移除';
+      }
+    }
+
     // --- 音訊播放邏輯 ---
     async function playAudio(audioInput, btnEl) {
       const fileId = extractDriveId(audioInput);
@@ -274,7 +307,6 @@
           btnEl.disabled = true;
         }
 
-        // 向 Apps Script 請求音檔 JSON
         const res = await fetch(`${SCRIPT_URL}?audioId=${fileId}`);
         const result = await res.json();
 
@@ -282,7 +314,6 @@
           throw new Error(result.message || '無法取得音訊串流');
         }
 
-        // 建立音訊來源
         player.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
         
         if (btnEl) btnEl.innerHTML = '🔊 播放中...';
@@ -297,7 +328,7 @@
 
       } catch (err) {
         console.error('音訊播放失敗：', err);
-        showToast('播放失敗，請確認檔案分享權限已開啟檢視', true);
+        showToast('播放失敗，請確認檔案分享權限', true);
         if (btnEl) {
           btnEl.innerHTML = originalText;
           btnEl.disabled = false;
@@ -318,7 +349,7 @@
         loading.classList.add('hidden');
 
         if (!cards || cards.length === 0) {
-          loading.innerHTML = '<span>目前試算表中尚無資料。</span>';
+          loading.innerHTML = '<span>目前教材庫中尚無字卡。</span>';
           loading.classList.remove('hidden');
           return;
         }
@@ -328,26 +359,36 @@
           const rawAudio = card.audio_url || '';
 
           const cardEl = document.createElement('div');
-          cardEl.className = 'bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden p-5 flex flex-col items-center text-center hover:shadow-md transition cursor-pointer';
+          cardEl.className = 'card-item relative bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden p-5 flex flex-col items-center text-center hover:shadow-md transition';
           
           cardEl.innerHTML = `
+            <!-- 右上角移除按鈕 -->
+            <button class="delete-btn absolute top-3 right-3 text-[11px] font-semibold text-rose-500 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 px-2 py-1 rounded-lg transition shadow-sm" title="移除此字卡">
+              🗑️ 移除
+            </button>
+
             ${directImg ? `<img src="${directImg}" class="w-full h-36 object-cover rounded-xl mb-3 bg-stone-100" alt="${card.hanzi}" onerror="this.style.display='none'">` : ''}
             <div class="text-xs text-amber-700 font-bold mb-1 tracking-wider">${card.pinyin || ''} ${card.zhuyin ? '· ' + card.zhuyin : ''}</div>
             <div class="text-3xl font-black text-stone-900 mb-1 hover:text-amber-600 transition-colors">${card.hanzi}</div>
             <div class="text-xs text-stone-500 mb-3">${card.english || ''}</div>
             ${card.sentence ? `<p class="text-xs text-stone-600 bg-stone-50 p-2.5 rounded-lg w-full mb-3 text-left">"${card.sentence}"</p>` : ''}
+            
             <button class="audio-btn mt-auto px-4 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-full text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition">
-              🔊 點擊聽發音
+              🔊 播放試聽
             </button>
           `;
 
+          // 綁定刪除按鈕
+          const delBtn = cardEl.querySelector('.delete-btn');
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteCard(card, delBtn);
+          });
+
+          // 綁定音訊播放按鈕
           const btn = cardEl.querySelector('.audio-btn');
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            playAudio(rawAudio, btn);
-          });
-
-          cardEl.addEventListener('click', () => {
             playAudio(rawAudio, btn);
           });
 
@@ -360,7 +401,7 @@
       }
     }
 
-    // 初次載入字卡
+    // 初次載入
     loadFlashcards();
   </script>
 </body>
