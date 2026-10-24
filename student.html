@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>Mandarin_V2</title>
+  <title>Mandarin_V3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
     <div class="flex items-center gap-3">
       <!-- 模式標籤 -->
       <span id="uiModeBadge" class="hidden sm:inline-block text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium">
-        跟讀練習模式
+        聽力學習模式
       </span>
 
       <!-- 中英語言切換按鈕 -->
@@ -43,7 +43,7 @@
   <div class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col md:flex-row gap-6">
 
     <!-- 左側：生字快速選單列表 (Sidebar) -->
-    <aside class="w-full md:w-80 flex flex-col bg-white rounded-2xl shadow-sm border border-stone-200 p-4 h-[380px] md:h-[720px]">
+    <aside class="w-full md:w-80 flex flex-col bg-white rounded-2xl shadow-sm border border-stone-200 p-4 h-[380px] md:h-[680px]">
       <div class="mb-3">
         <label id="uiSidebarTitle" class="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-1.5">生字快速清單</label>
         <div class="relative">
@@ -76,7 +76,7 @@
       <div id="focusCard" class="w-full max-w-lg bg-white rounded-3xl shadow-md border border-stone-100 overflow-hidden flex flex-col transition-all">
         
         <!-- 圖片展示 -->
-        <div class="relative w-full h-52 sm:h-60 bg-amber-50/50 flex items-center justify-center overflow-hidden border-b border-stone-100">
+        <div class="relative w-full h-56 sm:h-64 bg-amber-50/50 flex items-center justify-center overflow-hidden border-b border-stone-100">
           <img id="cardImage" src="" alt="生字插圖" class="w-full h-full object-cover hidden">
           <div id="noImagePlaceholder" class="text-stone-300 text-xs flex flex-col items-center gap-1">
             <svg class="w-10 h-10 stroke-current" fill="none" viewBox="0 0 24 24">
@@ -85,7 +85,7 @@
             <span id="uiNoImage">暫無插圖</span>
           </div>
           
-          <!-- 圖片右下角浮動播放老師發音鈕 -->
+          <!-- 圖片右下角浮動播放按鈕 -->
           <button id="floatingPlayBtn" onclick="triggerCurrentAudio()" title="聽老師發音" class="absolute bottom-4 right-4 bg-amber-500 hover:bg-amber-600 active:scale-90 text-white p-3 rounded-full shadow-lg transition flex items-center justify-center">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z"/>
@@ -93,73 +93,40 @@
           </button>
         </div>
 
-        <!-- 卡片文字區 -->
-        <div class="p-6 sm:p-7 flex flex-col items-center text-center">
+        <!-- 卡片文字與發音區 -->
+        <div class="p-6 sm:p-8 flex flex-col items-center text-center">
           
-          <!-- 拼音（與漢字同為 text-5xl sm:text-6xl） -->
+          <!-- 拼音（與漢字一樣大） -->
           <div id="cardPinyin" class="text-5xl sm:text-6xl font-black text-amber-700 tracking-wide select-none my-1">
             ---
           </div>
 
-          <!-- 注音符號（輔助字體） -->
+          <!-- 注音符號 -->
           <div id="cardZhuyin" class="text-xs sm:text-sm text-stone-400 font-medium mb-1">
             ---
           </div>
 
-          <!-- 核心漢字（點擊亦可播放） -->
+          <!-- 核心漢字（點擊即可播放） -->
           <div id="cardHanzi" onclick="triggerCurrentAudio()" title="點擊聽老師發音" class="text-5xl sm:text-6xl font-black text-stone-900 cursor-pointer hover:text-amber-600 active:scale-95 transition-all select-none my-1">
             ---
           </div>
 
-          <!-- 英文翻譯（比中文字小 2 號：text-3xl sm:text-4xl） -->
+          <!-- 英文翻譯（比中文字小 2 號） -->
           <div id="cardEnglish" class="text-3xl sm:text-4xl font-extrabold text-stone-600 my-2 tracking-tight">
             ---
           </div>
 
           <!-- 例句區塊 -->
-          <div id="sentenceBox" class="w-full bg-stone-50 rounded-xl p-3 border border-stone-100 text-left mb-5">
+          <div id="sentenceBox" class="w-full bg-stone-50 rounded-xl p-3.5 border border-stone-100 text-left mb-6">
             <div id="uiSentenceLabel" class="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">實用例句</div>
             <p id="cardSentence" class="text-stone-700 text-xs sm:text-sm leading-relaxed">---</p>
           </div>
 
-          <!-- 發音跟讀與對比控制區 -->
-          <div class="w-full bg-amber-50/60 rounded-2xl p-4 border border-amber-100 flex flex-col gap-3">
-            <div class="text-xs font-bold text-stone-700 flex items-center justify-between">
-              <span id="uiPracticeTitle">口說發音演練</span>
-              <span id="recordTimer" class="text-[11px] text-stone-400 font-mono">00:00</span>
-            </div>
-
-            <!-- 控制列：單純 🔊 圖示 + 錄音按鈕 -->
-            <div class="flex items-center gap-2.5">
-              <!-- 教師發音按鈕（僅保留 🔊 符號） -->
-              <button id="teacherPlayBtn" onclick="triggerCurrentAudio()" title="聽老師發音" class="w-12 h-11 shrink-0 bg-white hover:bg-stone-50 active:scale-95 border border-stone-200 text-stone-800 rounded-xl text-lg shadow-sm transition flex items-center justify-center">
-                <span>🔊</span>
-              </button>
-
-              <!-- 學生跟讀錄音按鈕 -->
-              <button id="studentRecordBtn" onclick="toggleStudentRecording()" class="flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5">
-                <span id="recDot" class="w-2 h-2 rounded-full bg-white"></span>
-                <span id="recBtnText">🎤 開始跟讀</span>
-              </button>
-            </div>
-
-            <!-- 比對播放面板（錄音完成後自動展開） -->
-            <div id="comparePanel" class="hidden pt-3 border-t border-amber-200/60 flex flex-col gap-2">
-              <div class="flex items-center justify-between text-[11px] text-stone-500">
-                <span id="uiRecordDone">我的錄音已完成：</span>
-                <span id="uiReadyCompare" class="text-emerald-600 font-semibold">✓ 隨時可比對</span>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <button onclick="playStudentAudio()" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1">
-                  <span id="uiListenMine">▶ 聽我的發音</span>
-                </button>
-                <button onclick="playCompareBoth()" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1">
-                  <span id="uiCompareAB">⇄ 聽 AB 連續對比</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
+          <!-- 教師發音按鈕（簡約大方） -->
+          <button id="teacherPlayBtn" onclick="triggerCurrentAudio()" title="聽老師發音" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white rounded-2xl text-base font-bold shadow-sm transition flex items-center justify-center gap-2">
+            <span class="text-xl">🔊</span>
+            <span id="uiPlayBtnText">播放標準發音</span>
+          </button>
 
         </div>
       </div>
@@ -167,24 +134,23 @@
     </main>
   </div>
 
-  <!-- 全域音訊物件 -->
+  <!-- 全域音訊播放器 -->
   <audio id="teacherAudio"></audio>
-  <audio id="studentAudio"></audio>
 
   <script>
     // ==========================================
-    // ⚠️ 請替換為你的 Google Apps Script Web App 網址
+    // ⚠️ 請填入你的 Google Apps Script Web App 網址
     // ==========================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
 
     let flashcardsData = [];
     let currentIndex = 0;
-    let currentLang = localStorage.getItem('site_lang') || 'zh'; // 'zh' or 'en'
+    let currentLang = localStorage.getItem('site_lang') || 'zh';
 
     // 多語系字典定義
     const i18n = {
       zh: {
-        modeBadge: "跟讀練習模式",
+        modeBadge: "聽力學習模式",
         langToggle: "EN",
         refreshTip: "重新同步教材",
         sidebarTitle: "生字快速清單",
@@ -197,24 +163,15 @@
         noImage: "暫無插圖",
         sentenceLabel: "實用例句",
         noSentence: "（無例句）",
-        practiceTitle: "口說發音演練",
-        recordStart: "🎤 開始跟讀",
-        recordStop: "停止跟讀",
-        recordRetry: "重新跟讀",
-        recordDone: "我的錄音已完成：",
-        readyCompare: "✓ 隨時可比對",
-        listenMine: "▶ 聽我的發音",
-        compareAB: "⇄ 聽 AB 連續對比",
+        playBtnText: "播放標準發音",
+        loadingAudio: "讀取中...",
+        playingAudio: "發音播放中...",
         toastNoAudio: "該生字尚未錄製發音檔",
         toastTeacherFail: "老師發音播放失敗",
-        toastRecordDone: "跟讀錄音完成！可點擊下方進行發音比對",
-        toastMicDenied: "無法取得麥克風權限，請確認瀏覽器已允許麥克風。",
-        toastNoStudentAudio: "尚未錄製個人發音",
-        toastCompareHint: "🔊 正在播放：先聽老師，再聽自己",
         toastLoadFail: "載入教材失敗，請檢查網路連線"
       },
       en: {
-        modeBadge: "Practice Mode",
+        modeBadge: "Listening Mode",
         langToggle: "中文",
         refreshTip: "Sync Cards",
         sidebarTitle: "Word List",
@@ -227,20 +184,11 @@
         noImage: "No Image",
         sentenceLabel: "Example Sentence",
         noSentence: "(No example)",
-        practiceTitle: "Speaking Practice",
-        recordStart: "🎤 Record Voice",
-        recordStop: "Stop Recording",
-        recordRetry: "Record Again",
-        recordDone: "Recording ready:",
-        readyCompare: "✓ Ready to compare",
-        listenMine: "▶ Play Mine",
-        compareAB: "⇄ Compare (Teacher → Me)",
+        playBtnText: "Play Pronunciation",
+        loadingAudio: "Loading...",
+        playingAudio: "Playing...",
         toastNoAudio: "No teacher audio for this card",
         toastTeacherFail: "Failed to play teacher audio",
-        toastRecordDone: "Recorded! Click below to compare.",
-        toastMicDenied: "Microphone access denied. Please allow microphone permissions.",
-        toastNoStudentAudio: "Please record your voice first",
-        toastCompareHint: "🔊 Playing: Teacher first, then yours",
         toastLoadFail: "Failed to load flashcards, check network"
       }
     };
@@ -257,15 +205,7 @@
       document.getElementById('uiEmptyText').innerText = t.emptyNotice;
       document.getElementById('uiNoImage').innerText = t.noImage;
       document.getElementById('uiSentenceLabel').innerText = t.sentenceLabel;
-      document.getElementById('uiPracticeTitle').innerText = t.practiceTitle;
-      document.getElementById('uiRecordDone').innerText = t.recordDone;
-      document.getElementById('uiReadyCompare').innerText = t.readyCompare;
-      document.getElementById('uiListenMine').innerText = t.listenMine;
-      document.getElementById('uiCompareAB').innerText = t.compareAB;
-
-      if (!isRecording) {
-        document.getElementById('recBtnText').innerText = studentAudioBlob ? t.recordRetry : t.recordStart;
-      }
+      document.getElementById('uiPlayBtnText').innerText = t.playBtnText;
     }
 
     function toggleLanguage() {
@@ -275,17 +215,7 @@
       filterCards();
     }
 
-    // 學生錄音狀態管理
-    let mediaRecorder;
-    let studentChunks = [];
-    let studentAudioBlob = null;
-    let studentAudioUrl = null;
-    let isRecording = false;
-    let recordInterval = null;
-    let recordSeconds = 0;
-
     const teacherAudio = document.getElementById('teacherAudio');
-    const studentAudio = document.getElementById('studentAudio');
 
     // 顯示 Toast 提示
     function showToast(message, isError = false) {
@@ -313,18 +243,19 @@
       return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
     }
 
-    // 播放老師發音（回傳 Promise，直到音檔播完才 resolve）
+    // 播放老師發音
     async function playTeacherAudio(audioInput) {
       const fileId = extractDriveId(audioInput);
       if (!fileId) {
         showToast(i18n[currentLang].toastNoAudio, true);
-        return Promise.reject('No audio ID');
+        return;
       }
 
       const teacherPlayBtn = document.getElementById('teacherPlayBtn');
+      const btnText = document.getElementById('uiPlayBtnText');
 
       try {
-        teacherPlayBtn.innerHTML = '<span>⏳</span>';
+        btnText.innerText = i18n[currentLang].loadingAudio;
         teacherPlayBtn.disabled = true;
 
         const res = await fetch(`${SCRIPT_URL}?audioId=${fileId}`);
@@ -335,143 +266,26 @@
         }
 
         teacherAudio.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
-        teacherPlayBtn.innerHTML = '<span>🔊</span>';
+        btnText.innerText = i18n[currentLang].playingAudio;
+        await teacherAudio.play();
 
-        return new Promise((resolve) => {
-          teacherAudio.onended = () => {
-            teacherPlayBtn.innerHTML = '<span>🔊</span>';
-            teacherPlayBtn.disabled = false;
-            resolve();
-          };
-          teacherAudio.onerror = (e) => {
-            teacherPlayBtn.innerHTML = '<span>🔊</span>';
-            teacherPlayBtn.disabled = false;
-            resolve();
-          };
-          teacherAudio.play();
-        });
+        teacherAudio.onended = () => {
+          btnText.innerText = i18n[currentLang].playBtnText;
+          teacherPlayBtn.disabled = false;
+        };
 
       } catch (err) {
         console.error('老師音訊播放錯誤：', err);
         showToast(i18n[currentLang].toastTeacherFail, true);
-        teacherPlayBtn.innerHTML = '<span>🔊</span>';
+        btnText.innerText = i18n[currentLang].playBtnText;
         teacherPlayBtn.disabled = false;
-        return Promise.reject(err);
       }
     }
 
     function triggerCurrentAudio() {
       if (flashcardsData.length > 0 && flashcardsData[currentIndex]) {
-        return playTeacherAudio(flashcardsData[currentIndex].audio_url);
+        playTeacherAudio(flashcardsData[currentIndex].audio_url);
       }
-      return Promise.reject('No card selected');
-    }
-
-    // --- 學生自主跟讀錄音 ---
-    async function toggleStudentRecording() {
-      const recBtn = document.getElementById('studentRecordBtn');
-      const recText = document.getElementById('recBtnText');
-      const recDot = document.getElementById('recDot');
-      const timerEl = document.getElementById('recordTimer');
-
-      if (!isRecording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          studentChunks = [];
-
-          mediaRecorder.ondataavailable = e => {
-            if (e.data.size > 0) studentChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            studentAudioBlob = new Blob(studentChunks, { type: 'audio/webm' });
-            if (studentAudioUrl) URL.revokeObjectURL(studentAudioUrl);
-            studentAudioUrl = URL.createObjectURL(studentAudioBlob);
-            studentAudio.src = studentAudioUrl;
-
-            document.getElementById('comparePanel').classList.remove('hidden');
-            showToast(i18n[currentLang].toastRecordDone);
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-          recText.innerText = i18n[currentLang].recordStop;
-          recBtn.className = 'flex-1 h-11 bg-stone-900 hover:bg-stone-800 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
-          recDot.classList.add('animate-ping');
-
-          recordSeconds = 0;
-          timerEl.innerText = '00:00';
-          recordInterval = setInterval(() => {
-            recordSeconds++;
-            const sec = String(recordSeconds % 60).padStart(2, '0');
-            const min = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
-            timerEl.innerText = `${min}:${sec}`;
-          }, 1000);
-
-        } catch (err) {
-          console.error(err);
-          showToast(i18n[currentLang].toastMicDenied, true);
-        }
-      } else {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        clearInterval(recordInterval);
-        isRecording = false;
-        recText.innerText = i18n[currentLang].recordRetry;
-        recBtn.className = 'flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
-        recDot.classList.remove('animate-ping');
-      }
-    }
-
-    // 播放學生的發音
-    function playStudentAudio() {
-      if (!studentAudioUrl) {
-        showToast(i18n[currentLang].toastNoStudentAudio, true);
-        return;
-      }
-      studentAudio.currentTime = 0;
-      studentAudio.play();
-    }
-
-    // AB 對比連續播放（修正：保證先播老師，播完等待 500ms，再播放學生）
-    async function playCompareBoth() {
-      if (!studentAudioUrl) {
-        showToast(i18n[currentLang].toastNoStudentAudio, true);
-        return;
-      }
-      showToast(i18n[currentLang].toastCompareHint);
-
-      try {
-        // 1. 先播放老師音檔，並確實等待音檔 onended 結束
-        await triggerCurrentAudio();
-        
-        // 2. 老師聲音結束後，短暫間隔 500ms
-        setTimeout(() => {
-          // 3. 播放學生錄音
-          playStudentAudio();
-        }, 500);
-      } catch (e) {
-        console.warn('AB 比對中斷或失敗', e);
-      }
-    }
-
-    // 清除當前卡片的學生錄音
-    function resetStudentRecording() {
-      if (isRecording && mediaRecorder) {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        isRecording = false;
-      }
-      clearInterval(recordInterval);
-      document.getElementById('recordTimer').innerText = '00:00';
-      document.getElementById('recBtnText').innerText = i18n[currentLang].recordStart;
-      document.getElementById('recDot').classList.remove('animate-ping');
-      document.getElementById('studentRecordBtn').className = 'flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
-      document.getElementById('comparePanel').classList.add('hidden');
-      studentAudioBlob = null;
-      if (studentAudioUrl) URL.revokeObjectURL(studentAudioUrl);
-      studentAudioUrl = null;
     }
 
     // 切換生字卡
@@ -479,8 +293,6 @@
       if (!flashcardsData[index]) return;
       currentIndex = index;
       const card = flashcardsData[index];
-
-      resetStudentRecording();
 
       // 更新生字與拼音
       document.getElementById('cardHanzi').innerText = card.hanzi || '';
@@ -509,7 +321,7 @@
         placeholder.classList.remove('hidden');
       }
 
-      // 側邊欄選中高亮
+      // 側邊欄高亮
       document.querySelectorAll('.sidebar-item').forEach((el, i) => {
         if (i === index) {
           el.className = 'sidebar-item w-full px-3 py-2.5 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-between text-xs transition cursor-pointer shadow-sm';
@@ -594,7 +406,7 @@
       }
     }
 
-    // 初始化介面語系與載入資料
+    // 初始化介面與資料
     updateLanguageUI();
     loadFlashcards();
   </script>
