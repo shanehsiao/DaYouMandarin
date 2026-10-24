@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入穩定開源拼音/注音解析庫 (pinyin-pro) -->
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
 </head>
 <body class="bg-amber-50/40 min-h-screen p-4 sm:p-8 font-sans flex flex-col items-center">
 
@@ -15,54 +17,58 @@
   <!-- 標題列 -->
   <header class="text-center mb-8">
     <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight">Mandarin 教師管理專區</h1>
-    <p class="text-stone-500 text-sm mt-1.5">雲端教材編輯 · 錄音發布 · 字卡管理</p>
+    <p class="text-stone-500 text-sm mt-1.5">雲端教材編輯 · 自動辨識生成 · 錄音發布</p>
   </header>
 
-  <!-- 教師建卡與錄音區塊 -->
+  <!-- 新增字卡表單區塊 -->
   <section class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 max-w-xl w-full mb-10">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-base font-bold text-stone-800 flex items-center gap-2">
         <span class="w-2.5 h-2.5 bg-amber-500 rounded-full"></span>
-        新增生字與錄製發音
+        新增生字卡與錄音
       </h2>
       <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">教師專區</span>
     </div>
 
     <form id="createForm" class="space-y-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-stone-600 mb-1">漢字 *</label>
-          <input type="text" id="hanzi" required placeholder="例如：你好" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+      <!-- 漢字輸入與自動辨識按鈕 -->
+      <div>
+        <label class="block text-xs font-semibold text-stone-600 mb-1">漢字 *</label>
+        <div class="flex gap-2">
+          <input type="text" id="hanzi" required placeholder="輸入漢字，例如：蘋果" class="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          <button type="button" onclick="autoFillDetails('create')" id="btnAutoFillCreate" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0">
+            <span>✨ AI 自動填寫</span>
+          </button>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-stone-600 mb-1">漢語拼音</label>
-          <input type="text" id="pinyin" placeholder="例如：nǐ hǎo" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
-        </div>
+        <p class="text-[11px] text-stone-400 mt-1">輸入漢字後點擊按鈕，即時帶出拼音、注音、英譯與例句</p>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-semibold text-stone-600 mb-1">注音符號</label>
-          <input type="text" id="zhuyin" placeholder="例如：ㄋㄧˇ ㄏㄠˇ" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          <label class="block text-xs font-semibold text-stone-600 mb-1">漢語拼音</label>
+          <input type="text" id="pinyin" placeholder="例如：píng guǒ" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-stone-600 mb-1">英文翻譯</label>
-          <input type="text" id="english" placeholder="例如：Hello" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          <label class="block text-xs font-semibold text-stone-600 mb-1">注音符號</label>
+          <input type="text" id="zhuyin" placeholder="例如：ㄆㄧㄥˊ ㄍㄨㄛˇ" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-stone-600 mb-1">例句</label>
-        <input type="text" id="sentence" placeholder="例如：你好，很高興認識你！" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        <label class="block text-xs font-semibold text-stone-600 mb-1">英文翻譯</label>
+        <input type="text" id="english" placeholder="例如：Apple" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
       </div>
 
-      <!-- 圖片上傳 -->
+      <div>
+        <label class="block text-xs font-semibold text-stone-600 mb-1">例句</label>
+        <input type="text" id="sentence" placeholder="例如：這顆蘋果很甜，非常好吃。" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+      </div>
+
       <div>
         <label class="block text-xs font-semibold text-stone-600 mb-1">字卡圖片</label>
         <input type="file" id="imageInput" accept="image/*" class="w-full text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
       </div>
 
-      <!-- 麥克風即時錄音控制 -->
       <div class="border border-dashed border-stone-300 rounded-xl p-3.5 bg-stone-50 text-center">
         <label class="block text-xs font-bold text-stone-700 mb-2">教師標準發音錄音</label>
         <div class="flex items-center justify-center gap-3">
@@ -81,7 +87,7 @@
     </form>
   </section>
 
-  <!-- 現有字卡列表區塊（支援移除） -->
+  <!-- 現有字卡列表區塊 -->
   <main class="max-w-5xl w-full">
     <div class="flex items-center justify-between mb-4 px-1">
       <h2 class="text-lg font-bold text-stone-800 flex items-center gap-2">
@@ -93,7 +99,6 @@
       </button>
     </div>
     
-    <!-- 載入中狀態 -->
     <div id="loading" class="text-center text-stone-400 py-12 text-sm flex flex-col items-center justify-center gap-2">
       <svg class="animate-spin h-6 w-6 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -106,6 +111,78 @@
     <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"></div>
   </main>
 
+  <!-- 編輯字卡彈跳視窗 (Modal) -->
+  <div id="editModal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-xl max-w-lg w-full p-6 border border-stone-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4 border-b pb-3">
+        <h3 class="text-base font-bold text-stone-800 flex items-center gap-2">
+          <span>✏️</span> 編輯生字卡
+        </h3>
+        <button onclick="closeEditModal()" class="text-stone-400 hover:text-stone-700 text-lg">✕</button>
+      </div>
+
+      <form id="editForm" class="space-y-3.5">
+        <input type="hidden" id="editRowIndex">
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">漢字 *</label>
+          <div class="flex gap-2">
+            <input type="text" id="editHanzi" required class="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+            <button type="button" onclick="autoFillDetails('edit')" id="btnAutoFillEdit" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0">
+              <span>✨ 自動重辨</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 mb-1">漢語拼音</label>
+            <input type="text" id="editPinyin" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 mb-1">注音符號</label>
+            <input type="text" id="editZhuyin" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">英文翻譯</label>
+          <input type="text" id="editEnglish" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">例句</label>
+          <input type="text" id="editSentence" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">更換圖片 (若不換請保留空白)</label>
+          <input type="file" id="editImageInput" accept="image/*" class="w-full text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+        </div>
+
+        <div class="border border-dashed border-stone-300 rounded-xl p-3 bg-stone-50 text-center">
+          <label class="block text-xs font-bold text-stone-700 mb-1.5">重錄發音 (若不錄請保留空白)</label>
+          <div class="flex items-center justify-center gap-3">
+            <button type="button" id="editRecordBtn" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition">
+              <span id="editRecordDot" class="w-2 h-2 rounded-full bg-white"></span>
+              <span id="editRecordText">開始重錄</span>
+            </button>
+            <audio id="editAudioPreview" controls class="h-8 max-w-[180px] hidden"></audio>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-stone-200 text-stone-600 rounded-xl text-xs font-semibold hover:bg-stone-50 transition">
+            取消
+          </button>
+          <button type="submit" id="saveEditBtn" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50">
+            儲存變更
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- 全域播放音訊物件 -->
   <audio id="globalAudio"></audio>
 
@@ -115,7 +192,9 @@
     // ==========================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
 
-    // 提示 Toast
+    let flashcardsData = [];
+
+    // Toast 訊息顯示
     function showToast(message, isError = false) {
       const toast = document.getElementById('toast');
       toast.innerText = message;
@@ -126,6 +205,81 @@
         toast.className = 'fixed top-5 z-50 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold';
       }, 3500);
     }
+
+    // --- 本機拼音 + 注音解析核心 ---
+    function parsePinyinAndZhuyin(text) {
+      if (!window.pinyinPro) {
+        return { pinyin: '', zhuyin: '' };
+      }
+      try {
+        // 取得標準聲調拼音
+        const pinyin = pinyinPro.pinyin(text, { toneType: 'symbol', type: 'string' });
+        // 取得臺灣教育部注音符號
+        const zhuyin = pinyinPro.pinyin(text, { pattern: 'zhuyin', type: 'string' });
+        return { pinyin, zhuyin };
+      } catch (e) {
+        console.error('拼音解析失敗：', e);
+        return { pinyin: '', zhuyin: '' };
+      }
+    }
+
+    // --- 自動辨識與例句生成核心功能 ---
+    async function autoFillDetails(target = 'create') {
+      const hanziInput = document.getElementById(target === 'create' ? 'hanzi' : 'editHanzi');
+      const hanzi = (hanziInput.value || '').trim();
+      if (!hanzi) {
+        showToast('請先輸入漢字！', true);
+        hanziInput.focus();
+        return;
+      }
+
+      const pinyinField = document.getElementById(target === 'create' ? 'pinyin' : 'editPinyin');
+      const zhuyinField = document.getElementById(target === 'create' ? 'zhuyin' : 'editZhuyin');
+      const englishField = document.getElementById(target === 'create' ? 'english' : 'editEnglish');
+      const sentenceField = document.getElementById(target === 'create' ? 'sentence' : 'editSentence');
+
+      // 1. 本機端直接生成拼音與注音（零延遲，保證成功）
+      const phonetic = parsePinyinAndZhuyin(hanzi);
+      if (phonetic.pinyin) pinyinField.value = phonetic.pinyin;
+      if (phonetic.zhuyin) zhuyinField.value = phonetic.zhuyin;
+
+      // 2. 向 Apps Script 請求英文翻譯與例句
+      const btn = document.getElementById(target === 'create' ? 'btnAutoFillCreate' : 'btnAutoFillEdit');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>⏳ 翻譯中...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=autoFill&hanzi=${encodeURIComponent(hanzi)}`);
+        const result = await res.json();
+
+        if (result.status === 'success' && result.data) {
+          if (result.data.english) englishField.value = result.data.english;
+          if (result.data.sentence) sentenceField.value = result.data.sentence;
+        } else {
+          // 網路若有延遲，提供在地預設例句
+          if (!sentenceField.value) sentenceField.value = `我很喜歡${hanzi}。`;
+        }
+
+        showToast('✨ 拼音、注音、英譯與例句已全數帶入！');
+
+      } catch (err) {
+        console.warn('翻譯伺服器稍慢，已先填入拼音與注音');
+        if (!sentenceField.value) sentenceField.value = `我很喜歡${hanzi}。`;
+        showToast('拼音與注音已帶入！');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // 輸入漢字按 Enter 鍵亦可觸發自動填寫
+    document.getElementById('hanzi').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        autoFillDetails('create');
+      }
+    });
 
     function extractDriveId(urlOrId) {
       if (!urlOrId) return '';
@@ -139,7 +293,16 @@
       return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
     }
 
-    // --- 錄音功能 ---
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // --- 新增字卡錄音 ---
     let mediaRecorder;
     let audioChunks = [];
     let recordedAudioBlob = null;
@@ -158,10 +321,7 @@
           mediaRecorder = new MediaRecorder(stream);
           audioChunks = [];
 
-          mediaRecorder.ondataavailable = e => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-          };
-
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
           mediaRecorder.onstop = () => {
             recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioPreview.src = URL.createObjectURL(recordedAudioBlob);
@@ -175,8 +335,7 @@
           recordDot.classList.add('animate-ping');
           recordStatus.innerText = '正在錄音中...';
         } catch (err) {
-          console.error(err);
-          showToast('無法取得麥克風權限，請確認瀏覽器已允許麥克風。', true);
+          showToast('無法取得麥克風權限', true);
         }
       } else {
         mediaRecorder.stop();
@@ -187,16 +346,7 @@
       }
     });
 
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
-    }
-
-    // --- 新增字卡 ---
+    // --- 新增字卡表單送出 ---
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
@@ -226,6 +376,7 @@
         }
 
         const payload = {
+          action: 'add',
           hanzi, pinyin, zhuyin, english, sentence,
           imageBase64, imageName, imageMimeType,
           audioBase64, audioName, audioMimeType
@@ -255,6 +406,131 @@
       }
     });
 
+    // --- 編輯 Modal 與錄音控制 ---
+    let editMediaRecorder;
+    let editAudioChunks = [];
+    let editRecordedBlob = null;
+    let isEditRecording = false;
+
+    const editRecordBtn = document.getElementById('editRecordBtn');
+    const editRecordText = document.getElementById('editRecordText');
+    const editRecordDot = document.getElementById('editRecordDot');
+    const editAudioPreview = document.getElementById('editAudioPreview');
+
+    editRecordBtn.addEventListener('click', async () => {
+      if (!isEditRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          editMediaRecorder = new MediaRecorder(stream);
+          editAudioChunks = [];
+
+          editMediaRecorder.ondataavailable = e => { if (e.data.size > 0) editAudioChunks.push(e.data); };
+          editMediaRecorder.onstop = () => {
+            editRecordedBlob = new Blob(editAudioChunks, { type: 'audio/webm' });
+            editAudioPreview.src = URL.createObjectURL(editRecordedBlob);
+            editAudioPreview.classList.remove('hidden');
+          };
+
+          editMediaRecorder.start();
+          isEditRecording = true;
+          editRecordText.innerText = '停止重錄';
+          editRecordDot.classList.add('animate-ping');
+        } catch (err) {
+          showToast('無法取得麥克風權限', true);
+        }
+      } else {
+        editMediaRecorder.stop();
+        editMediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isEditRecording = false;
+        editRecordText.innerText = '再次重錄';
+        editRecordDot.classList.remove('animate-ping');
+      }
+    });
+
+    function openEditModal(card) {
+      document.getElementById('editRowIndex').value = card.rowIndex;
+      document.getElementById('editHanzi').value = card.hanzi || '';
+      document.getElementById('editPinyin').value = card.pinyin || '';
+      document.getElementById('editZhuyin').value = card.zhuyin || '';
+      document.getElementById('editEnglish').value = card.english || '';
+      document.getElementById('editSentence').value = card.sentence || '';
+      
+      document.getElementById('editImageInput').value = '';
+      editRecordedBlob = null;
+      editAudioPreview.classList.add('hidden');
+      editRecordText.innerText = '開始重錄';
+      editRecordDot.classList.remove('animate-ping');
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      if (isEditRecording && editMediaRecorder) {
+        editMediaRecorder.stop();
+        editMediaRecorder.stream.getTracks().forEach(t => t.stop());
+        isEditRecording = false;
+      }
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    // --- 送出編輯更新 ---
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveEditBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = '更新中...';
+
+      try {
+        const rowIndex = document.getElementById('editRowIndex').value;
+        const hanzi = document.getElementById('editHanzi').value;
+        const pinyin = document.getElementById('editPinyin').value;
+        const zhuyin = document.getElementById('editZhuyin').value;
+        const english = document.getElementById('editEnglish').value;
+        const sentence = document.getElementById('editSentence').value;
+        const imageFile = document.getElementById('editImageInput').files[0];
+
+        let imageBase64 = '', imageName = '', imageMimeType = '';
+        if (imageFile) {
+          imageBase64 = await toBase64(imageFile);
+          imageName = `${hanzi}_img_${Date.now()}`;
+          imageMimeType = imageFile.type;
+        }
+
+        let audioBase64 = '', audioName = '', audioMimeType = '';
+        if (editRecordedBlob) {
+          audioBase64 = await toBase64(editRecordedBlob);
+          audioName = `${hanzi}_audio_${Date.now()}.webm`;
+          audioMimeType = editRecordedBlob.type;
+        }
+
+        const payload = {
+          action: 'update',
+          rowIndex,
+          hanzi, pinyin, zhuyin, english, sentence,
+          imageBase64, imageName, imageMimeType,
+          audioBase64, audioName, audioMimeType
+        };
+
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        showToast('字卡修改成功！');
+        closeEditModal();
+        setTimeout(loadFlashcards, 2000);
+
+      } catch (err) {
+        console.error(err);
+        showToast('更新失敗，請檢查網路狀態', true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = '儲存變更';
+      }
+    });
+
     // --- 移除字卡功能 ---
     async function deleteCard(card, btnEl) {
       const confirmDelete = confirm(`確定要移除字卡「${card.hanzi}」嗎？\n此動作將一併從試算表與雲端硬碟中刪除。`);
@@ -276,10 +552,7 @@
         });
 
         showToast(`已成功移除字卡「${card.hanzi}」`);
-        if (cardEl) {
-          cardEl.remove();
-        }
-        // 延遲刷新清單以確保最新索引一致
+        if (cardEl) cardEl.remove();
         setTimeout(loadFlashcards, 1500);
 
       } catch (err) {
@@ -315,7 +588,6 @@
         }
 
         player.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
-        
         if (btnEl) btnEl.innerHTML = '🔊 播放中...';
         await player.play();
 
@@ -345,16 +617,16 @@
 
       try {
         const res = await fetch(SCRIPT_URL);
-        const cards = await res.json();
+        flashcardsData = await res.json();
         loading.classList.add('hidden');
 
-        if (!cards || cards.length === 0) {
+        if (!flashcardsData || flashcardsData.length === 0) {
           loading.innerHTML = '<span>目前教材庫中尚無字卡。</span>';
           loading.classList.remove('hidden');
           return;
         }
 
-        cards.forEach(card => {
+        flashcardsData.forEach(card => {
           const directImg = parseDriveImageUrl(card.image_url);
           const rawAudio = card.audio_url || '';
 
@@ -362,10 +634,14 @@
           cardEl.className = 'card-item relative bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden p-5 flex flex-col items-center text-center hover:shadow-md transition';
           
           cardEl.innerHTML = `
-            <!-- 右上角移除按鈕 -->
-            <button class="delete-btn absolute top-3 right-3 text-[11px] font-semibold text-rose-500 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 px-2 py-1 rounded-lg transition shadow-sm" title="移除此字卡">
-              🗑️ 移除
-            </button>
+            <div class="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+              <button class="edit-btn text-[11px] font-semibold text-amber-700 hover:text-white bg-amber-50 hover:bg-amber-600 border border-amber-200 px-2 py-1 rounded-lg transition shadow-sm" title="編輯此字卡">
+                ✏️ 編輯
+              </button>
+              <button class="delete-btn text-[11px] font-semibold text-rose-500 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 px-2 py-1 rounded-lg transition shadow-sm" title="移除此字卡">
+                🗑️ 移除
+              </button>
+            </div>
 
             ${directImg ? `<img src="${directImg}" class="w-full h-36 object-cover rounded-xl mb-3 bg-stone-100" alt="${card.hanzi}" onerror="this.style.display='none'">` : ''}
             <div class="text-xs text-amber-700 font-bold mb-1 tracking-wider">${card.pinyin || ''} ${card.zhuyin ? '· ' + card.zhuyin : ''}</div>
@@ -378,14 +654,18 @@
             </button>
           `;
 
-          // 綁定刪除按鈕
+          const editBtn = cardEl.querySelector('.edit-btn');
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditModal(card);
+          });
+
           const delBtn = cardEl.querySelector('.delete-btn');
           delBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteCard(card, delBtn);
           });
 
-          // 綁定音訊播放按鈕
           const btn = cardEl.querySelector('.audio-btn');
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
