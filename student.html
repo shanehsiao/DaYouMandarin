@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>華語學習字卡 - 學生自主學習館</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-amber-50/40 min-h-screen font-sans flex flex-col text-stone-800">
+
+  <!-- 頂部提示條 (Toast) -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none px-4 py-2 rounded-xl shadow-lg text-xs font-semibold"></div>
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-white/80 backdrop-blur border-b border-stone-200 sticky top-0 z-40 px-4 py-3 sm:px-8 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></span>
+      <h1 class="text-lg sm:text-xl font-black text-amber-950 tracking-tight">華語生字自學館</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium">學生模式 (唯讀)</span>
+      <button onclick="loadFlashcards()" title="重新同步教材" class="p-1.5 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主體區塊 -->
+  <div class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col md:flex-row gap-6">
+
+    <!-- 左側：生字快速選單列表 (Sidebar) -->
+    <aside class="w-full md:w-80 flex flex-col bg-white rounded-2xl shadow-sm border border-stone-200 p-4 h-[420px] md:h-[650px]">
+      <div class="mb-3">
+        <label class="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-1.5">生字快速清單</label>
+        <div class="relative">
+          <input type="text" id="searchInput" oninput="filterCards()" placeholder="搜尋漢字、拼音或英文..." class="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+          <svg class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 清單內容 -->
+      <div id="sidebarList" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-sm">
+        <div class="text-center text-stone-400 py-10 text-xs">載入清單中...</div>
+      </div>
+      
+      <div class="pt-3 border-t border-stone-100 text-[11px] text-stone-400 text-center">
+        共 <span id="totalCount" class="font-bold text-stone-600">0</span> 個生字
+      </div>
+    </aside>
+
+    <!-- 右側：沉浸式學習卡片主展示區 -->
+    <main class="flex-1 flex flex-col items-center justify-center">
+      
+      <!-- 初始/空狀態 -->
+      <div id="emptyNotice" class="text-center py-20 text-stone-400 hidden">
+        <p class="text-sm">請從左側清單選擇要學習的生字</p>
+      </div>
+
+      <!-- 生字聚焦卡片 -->
+      <div id="focusCard" class="w-full max-w-lg bg-white rounded-3xl shadow-md border border-stone-100 overflow-hidden flex flex-col transition-all">
+        <!-- 圖片展示 -->
+        <div class="relative w-full h-56 sm:h-64 bg-amber-50/50 flex items-center justify-center overflow-hidden border-b border-stone-100">
+          <img id="cardImage" src="" alt="生字插圖" class="w-full h-full object-cover hidden">
+          <div id="noImagePlaceholder" class="text-stone-300 text-xs flex flex-col items-center gap-1">
+            <svg class="w-10 h-10 stroke-current" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>暫無插圖</span>
+          </div>
+          <!-- 播放動畫覆蓋按鈕 -->
+          <button id="floatingPlayBtn" onclick="triggerCurrentAudio()" class="absolute bottom-4 right-4 bg-amber-500 hover:bg-amber-600 active:scale-90 text-white p-3.5 rounded-full shadow-lg transition flex items-center justify-center">
+            <svg id="playIcon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 內容區 -->
+        <div class="p-6 sm:p-8 flex flex-col items-center text-center">
+          
+          <!-- 注音與拼音 -->
+          <div class="flex items-center gap-2 mb-2">
+            <span id="cardPinyin" class="text-sm sm:text-base font-bold text-amber-700 tracking-wider"></span>
+            <span class="text-stone-300">·</span>
+            <span id="cardZhuyin" class="text-xs sm:text-sm text-stone-500 font-medium"></span>
+          </div>
+
+          <!-- 核心漢字（點選亦可播放聲音） -->
+          <div id="cardHanzi" onclick="triggerCurrentAudio()" title="點擊聽發音" class="text-5xl sm:text-6xl font-black text-stone-900 cursor-pointer hover:text-amber-600 active:scale-95 transition-all select-none my-2">
+            ---
+          </div>
+
+          <!-- 英文翻譯 -->
+          <div id="cardEnglish" class="text-sm sm:text-base text-stone-500 font-medium mb-5">
+            ---
+          </div>
+
+          <!-- 例句區塊 -->
+          <div id="sentenceBox" class="w-full bg-stone-50 rounded-2xl p-4 border border-stone-100 text-left">
+            <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-1">實用例句</div>
+            <p id="cardSentence" class="text-stone-700 text-sm leading-relaxed">---</p>
+          </div>
+
+          <!-- 底部發音控制條 -->
+          <button id="mainAudioBtn" onclick="triggerCurrentAudio()" class="mt-6 w-full py-3 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white rounded-xl text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+            <span>🔊 點擊聆聽教師標準發音</span>
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <audio id="globalAudio"></audio>
+
+  <script>
+    // ==========================================
+    // ⚠️ 請填入你的 Google Apps Script Web App 網址
+    // ==========================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
+
+    let flashcardsData = [];
+    let currentIndex = 0;
+
+    // Toast 訊息顯示
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform translate-y-0 opacity-100 px-4 py-2 rounded-xl shadow-lg text-xs font-semibold ${
+        isError ? 'bg-rose-600 text-white' : 'bg-stone-900 text-white'
+      }`;
+      setTimeout(() => {
+        toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none px-4 py-2 rounded-xl shadow-lg text-xs font-semibold';
+      }, 3000);
+    }
+
+    // 擷取 Drive ID
+    function extractDriveId(urlOrId) {
+      if (!urlOrId) return '';
+      const str = String(urlOrId).trim();
+      const match = str.match(/[-\w]{25,}/);
+      return match ? match[0] : str;
+    }
+
+    // 圖片直連
+    function parseDriveImageUrl(rawInput) {
+      const fileId = extractDriveId(rawInput);
+      return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
+    }
+
+    // 播放音訊
+    async function playAudio(audioInput) {
+      const fileId = extractDriveId(audioInput);
+      if (!fileId) {
+        showToast('該生字尚未錄製發音檔', true);
+        return;
+      }
+
+      const player = document.getElementById('globalAudio');
+      const mainBtn = document.getElementById('mainAudioBtn');
+      const originalText = mainBtn.innerHTML;
+
+      try {
+        mainBtn.innerHTML = '<span>⏳ 發音載入中...</span>';
+        mainBtn.disabled = true;
+
+        const res = await fetch(`${SCRIPT_URL}?audioId=${fileId}`);
+        const result = await res.json();
+
+        if (result.status !== 'success' || !result.data) {
+          throw new Error(result.message || '無法取得發音');
+        }
+
+        player.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
+        mainBtn.innerHTML = '<span>🔊 播放中...</span>';
+        await player.play();
+
+        player.onended = () => {
+          mainBtn.innerHTML = originalText;
+          mainBtn.disabled = false;
+        };
+
+      } catch (err) {
+        console.error('音訊播放錯誤：', err);
+        showToast('音訊載入失敗，請確認檔案分享權限', true);
+        mainBtn.innerHTML = originalText;
+        mainBtn.disabled = false;
+      }
+    }
+
+    // 播放當前卡片發音
+    function triggerCurrentAudio() {
+      if (flashcardsData.length > 0 && flashcardsData[currentIndex]) {
+        playAudio(flashcardsData[currentIndex].audio_url);
+      }
+    }
+
+    // 切換顯示的生字卡
+    function selectCard(index) {
+      if (!flashcardsData[index]) return;
+      currentIndex = index;
+      const card = flashcardsData[index];
+
+      // 更新卡片內容
+      document.getElementById('cardHanzi').innerText = card.hanzi || '';
+      document.getElementById('cardPinyin').innerText = card.pinyin || '';
+      document.getElementById('cardZhuyin').innerText = card.zhuyin || '';
+      document.getElementById('cardEnglish').innerText = card.english || '';
+      document.getElementById('cardSentence').innerText = card.sentence || '（無例句）';
+
+      // 圖片切換
+      const imgEl = document.getElementById('cardImage');
+      const placeholder = document.getElementById('noImagePlaceholder');
+      const directImg = parseDriveImageUrl(card.image_url);
+
+      if (directImg) {
+        imgEl.src = directImg;
+        imgEl.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        imgEl.onerror = () => {
+          imgEl.classList.add('hidden');
+          placeholder.classList.remove('hidden');
+        };
+      } else {
+        imgEl.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+      }
+
+      // 高亮左側選中的項目
+      document.querySelectorAll('.sidebar-item').forEach((el, i) => {
+        if (i === index) {
+          el.className = 'sidebar-item w-full px-3 py-2.5 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-between text-xs transition cursor-pointer shadow-sm';
+        } else {
+          el.className = 'sidebar-item w-full px-3 py-2.5 rounded-xl hover:bg-stone-50 text-stone-700 flex items-center justify-between text-xs transition cursor-pointer border border-transparent hover:border-stone-100';
+        }
+      });
+    }
+
+    // 渲染左側生字清單
+    function renderSidebar(cards) {
+      const list = document.getElementById('sidebarList');
+      list.innerHTML = '';
+
+      if (cards.length === 0) {
+        list.innerHTML = '<div class="text-center text-stone-400 py-8 text-xs">查無相符生字</div>';
+        return;
+      }
+
+      cards.forEach((card, idx) => {
+        const item = document.createElement('div');
+        item.className = 'sidebar-item w-full px-3 py-2.5 rounded-xl hover:bg-stone-50 text-stone-700 flex items-center justify-between text-xs transition cursor-pointer';
+        item.innerHTML = `
+          <div class="flex items-center gap-2 truncate">
+            <span class="font-black text-sm">${card.hanzi}</span>
+            <span class="text-[11px] opacity-75 truncate">${card.pinyin || ''}</span>
+          </div>
+          <span class="text-[10px] opacity-60 ml-2 shrink-0">${card.english || ''}</span>
+        `;
+        item.addEventListener('click', () => {
+          // 找到原始資料中的索引
+          const originalIndex = flashcardsData.findIndex(c => c === card);
+          selectCard(originalIndex);
+        });
+        list.appendChild(item);
+      });
+    }
+
+    // 關鍵字搜尋過濾
+    function filterCards() {
+      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!keyword) {
+        renderSidebar(flashcardsData);
+        return;
+      }
+      const filtered = flashcardsData.filter(c => 
+        (c.hanzi && c.hanzi.toLowerCase().includes(keyword)) ||
+        (c.pinyin && c.pinyin.toLowerCase().includes(keyword)) ||
+        (c.zhuyin && c.zhuyin.toLowerCase().includes(keyword)) ||
+        (c.english && c.english.toLowerCase().includes(keyword))
+      );
+      renderSidebar(filtered);
+    }
+
+    // 從 Apps Script 載入教材
+    async function loadFlashcards() {
+      const list = document.getElementById('sidebarList');
+      list.innerHTML = '<div class="text-center text-stone-400 py-10 text-xs">同步中...</div>';
+
+      try {
+        const res = await fetch(SCRIPT_URL);
+        flashcardsData = await res.json();
+
+        document.getElementById('totalCount').innerText = flashcardsData.length;
+
+        if (flashcardsData.length === 0) {
+          list.innerHTML = '<div class="text-center text-stone-400 py-10 text-xs">目前無教材</div>';
+          document.getElementById('focusCard').classList.add('hidden');
+          document.getElementById('emptyNotice').classList.remove('hidden');
+          return;
+        }
+
+        document.getElementById('focusCard').classList.remove('hidden');
+        document.getElementById('emptyNotice').classList.add('hidden');
+
+        renderSidebar(flashcardsData);
+        // 預設顯示第一張卡片
+        selectCard(0);
+
+      } catch (err) {
+        console.error(err);
+        showToast('載入教材失敗，請檢查 Apps Script 設定', true);
+        list.innerHTML = '<div class="text-center text-rose-500 py-10 text-xs">載入失敗</div>';
+      }
+    }
+
+    // 啟動載入
+    loadFlashcards();
+  </script>
+</body>
+</html>
