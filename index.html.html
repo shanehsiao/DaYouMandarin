@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>華語生字學習平台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-amber-50/40 min-h-screen p-4 sm:p-8 font-sans flex flex-col items-center">
+
+  <!-- 浮動訊息通知 (Toast) -->
+  <div id="toast" class="fixed top-5 z-50 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold"></div>
+
+  <!-- 標題列 -->
+  <header class="text-center mb-8">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight">華語生字學習卡平台</h1>
+    <p class="text-stone-500 text-sm mt-1.5">雲端教材即時同步 · 隨選隨聽發音</p>
+  </header>
+
+  <!-- 教師建卡與錄音區塊 -->
+  <section class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 max-w-xl w-full mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-stone-800 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-amber-500 rounded-full"></span>
+        新增生字與錄製發音
+      </h2>
+      <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">教師專區</span>
+    </div>
+
+    <form id="createForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">漢字 *</label>
+          <input type="text" id="hanzi" required placeholder="例如：你好" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">漢語拼音</label>
+          <input type="text" id="pinyin" placeholder="例如：nǐ hǎo" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">注音符號</label>
+          <input type="text" id="zhuyin" placeholder="例如：ㄋㄧˇ ㄏㄠˇ" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">英文翻譯</label>
+          <input type="text" id="english" placeholder="例如：Hello" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-stone-600 mb-1">例句</label>
+        <input type="text" id="sentence" placeholder="例如：你好，很高興認識你！" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+      </div>
+
+      <!-- 圖片上傳 -->
+      <div>
+        <label class="block text-xs font-semibold text-stone-600 mb-1">字卡圖片</label>
+        <input type="file" id="imageInput" accept="image/*" class="w-full text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+      </div>
+
+      <!-- 麥克風即時錄音控制 -->
+      <div class="border border-dashed border-stone-300 rounded-xl p-3.5 bg-stone-50 text-center">
+        <label class="block text-xs font-bold text-stone-700 mb-2">教師標準發音錄音</label>
+        <div class="flex items-center justify-center gap-3">
+          <button type="button" id="recordBtn" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition">
+            <span id="recordDot" class="w-2 h-2 rounded-full bg-white"></span>
+            <span id="recordText">開始錄音</span>
+          </button>
+          <audio id="audioPreview" controls class="h-8 max-w-[200px] hidden"></audio>
+        </div>
+        <p id="recordStatus" class="text-[11px] text-stone-400 mt-1.5">點擊開始錄音（瀏覽器會詢問麥克風存取權）</p>
+      </div>
+
+      <button type="submit" id="submitBtn" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold rounded-lg text-sm shadow transition disabled:opacity-50">
+        同步儲存至 Google 雲端
+      </button>
+    </form>
+  </section>
+
+  <!-- 學生學習卡片清單 -->
+  <main class="max-w-5xl w-full">
+    <div class="flex items-center justify-between mb-4 px-1">
+      <h2 class="text-lg font-bold text-stone-800 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+        生字教材庫
+      </h2>
+      <button onclick="loadFlashcards()" class="text-xs px-3 py-1 bg-white hover:bg-stone-100 text-stone-600 rounded-lg border border-stone-200 shadow-sm transition">
+        重新整理
+      </button>
+    </div>
+    
+    <!-- 載入中狀態 -->
+    <div id="loading" class="text-center text-stone-400 py-12 text-sm flex flex-col items-center justify-center gap-2">
+      <svg class="animate-spin h-6 w-6 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" stroke-line="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>正在讀取 Google 雲端教材...</span>
+    </div>
+
+    <!-- 字卡展示網格 -->
+    <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"></div>
+  </main>
+
+  <!-- 全域播放音訊物件 -->
+  <audio id="globalAudio"></audio>
+
+  <script>
+    // ==========================================
+    // ⚠️ 請替換為您的 Google Apps Script 網頁應用程式網址
+    // ==========================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
+
+    // 提示 Toast
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.className = `fixed top-5 z-50 transition-all duration-300 transform translate-y-0 opacity-100 px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold ${
+        isError ? 'bg-rose-600 text-white' : 'bg-stone-900 text-white'
+      }`;
+      setTimeout(() => {
+        toast.className = 'fixed top-5 z-50 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold';
+      }, 3500);
+    }
+
+    // 擷取 Google Drive 檔案 ID
+    function extractDriveId(urlOrId) {
+      if (!urlOrId) return '';
+      const str = String(urlOrId).trim();
+      const match = str.match(/[-\w]{25,}/);
+      return match ? match[0] : str;
+    }
+
+    // 圖片直連轉換
+    function parseDriveImageUrl(rawInput) {
+      const fileId = extractDriveId(rawInput);
+      return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
+    }
+
+    // --- 錄音功能實作 ---
+    let mediaRecorder;
+    let audioChunks = [];
+    let recordedAudioBlob = null;
+    let isRecording = false;
+
+    const recordBtn = document.getElementById('recordBtn');
+    const recordText = document.getElementById('recordText');
+    const recordDot = document.getElementById('recordDot');
+    const recordStatus = document.getElementById('recordStatus');
+    const audioPreview = document.getElementById('audioPreview');
+
+    recordBtn.addEventListener('click', async () => {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioPreview.src = URL.createObjectURL(recordedAudioBlob);
+            audioPreview.classList.remove('hidden');
+            recordStatus.innerText = '錄音完成！可點擊右方試聽';
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          recordText.innerText = '停止錄音';
+          recordDot.classList.add('animate-ping');
+          recordStatus.innerText = '正在錄音中...';
+        } catch (err) {
+          console.error(err);
+          showToast('無法取得麥克風權限，請確認瀏覽器已允許麥克風。', true);
+        }
+      } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+        recordText.innerText = '重新錄音';
+        recordDot.classList.remove('animate-ping');
+      }
+    });
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // --- 表單送出至 Google Apps Script ---
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = '儲存至 Google 雲端中，請稍候...';
+
+      try {
+        const hanzi = document.getElementById('hanzi').value;
+        const pinyin = document.getElementById('pinyin').value;
+        const zhuyin = document.getElementById('zhuyin').value;
+        const english = document.getElementById('english').value;
+        const sentence = document.getElementById('sentence').value;
+        const imageFile = document.getElementById('imageInput').files[0];
+
+        let imageBase64 = '', imageName = '', imageMimeType = '';
+        if (imageFile) {
+          imageBase64 = await toBase64(imageFile);
+          imageName = `${hanzi}_img_${Date.now()}`;
+          imageMimeType = imageFile.type;
+        }
+
+        let audioBase64 = '', audioName = '', audioMimeType = '';
+        if (recordedAudioBlob) {
+          audioBase64 = await toBase64(recordedAudioBlob);
+          audioName = `${hanzi}_audio_${Date.now()}.webm`;
+          audioMimeType = recordedAudioBlob.type;
+        }
+
+        const payload = {
+          hanzi, pinyin, zhuyin, english, sentence,
+          imageBase64, imageName, imageMimeType,
+          audioBase64, audioName, audioMimeType
+        };
+
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        showToast('字卡建立成功！已同步至 Google 雲端。');
+        document.getElementById('createForm').reset();
+        audioPreview.classList.add('hidden');
+        recordedAudioBlob = null;
+        recordText.innerText = '開始錄音';
+        
+        setTimeout(loadFlashcards, 2500);
+
+      } catch (err) {
+        console.error(err);
+        showToast('上傳儲存失敗，請檢查網路連線。', true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = '同步儲存至 Google 雲端';
+      }
+    });
+
+    // --- 音訊播放邏輯 ---
+    async function playAudio(audioInput, btnEl) {
+      const fileId = extractDriveId(audioInput);
+      if (!fileId) {
+        showToast('此卡片尚未設定音檔', true);
+        return;
+      }
+
+      const player = document.getElementById('globalAudio');
+      const originalText = btnEl ? btnEl.innerHTML : '';
+
+      try {
+        if (btnEl) {
+          btnEl.innerHTML = '⏳ 讀取中...';
+          btnEl.disabled = true;
+        }
+
+        // 向 Apps Script 請求音檔 JSON
+        const res = await fetch(`${SCRIPT_URL}?audioId=${fileId}`);
+        const result = await res.json();
+
+        if (result.status !== 'success' || !result.data) {
+          throw new Error(result.message || '無法取得音訊串流');
+        }
+
+        // 建立音訊來源
+        player.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
+        
+        if (btnEl) btnEl.innerHTML = '🔊 播放中...';
+        await player.play();
+
+        player.onended = () => {
+          if (btnEl) {
+            btnEl.innerHTML = originalText;
+            btnEl.disabled = false;
+          }
+        };
+
+      } catch (err) {
+        console.error('音訊播放失敗：', err);
+        showToast('播放失敗，請確認檔案分享權限已開啟檢視', true);
+        if (btnEl) {
+          btnEl.innerHTML = originalText;
+          btnEl.disabled = false;
+        }
+      }
+    }
+
+    // --- 載入現有字卡清單 ---
+    async function loadFlashcards() {
+      const grid = document.getElementById('cardGrid');
+      const loading = document.getElementById('loading');
+      grid.innerHTML = '';
+      loading.classList.remove('hidden');
+
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const cards = await res.json();
+        loading.classList.add('hidden');
+
+        if (!cards || cards.length === 0) {
+          loading.innerHTML = '<span>目前試算表中尚無資料。</span>';
+          loading.classList.remove('hidden');
+          return;
+        }
+
+        cards.forEach(card => {
+          const directImg = parseDriveImageUrl(card.image_url);
+          const rawAudio = card.audio_url || '';
+
+          const cardEl = document.createElement('div');
+          cardEl.className = 'bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden p-5 flex flex-col items-center text-center hover:shadow-md transition cursor-pointer';
+          
+          cardEl.innerHTML = `
+            ${directImg ? `<img src="${directImg}" class="w-full h-36 object-cover rounded-xl mb-3 bg-stone-100" alt="${card.hanzi}" onerror="this.style.display='none'">` : ''}
+            <div class="text-xs text-amber-700 font-bold mb-1 tracking-wider">${card.pinyin || ''} ${card.zhuyin ? '· ' + card.zhuyin : ''}</div>
+            <div class="text-3xl font-black text-stone-900 mb-1 hover:text-amber-600 transition-colors">${card.hanzi}</div>
+            <div class="text-xs text-stone-500 mb-3">${card.english || ''}</div>
+            ${card.sentence ? `<p class="text-xs text-stone-600 bg-stone-50 p-2.5 rounded-lg w-full mb-3 text-left">"${card.sentence}"</p>` : ''}
+            <button class="audio-btn mt-auto px-4 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-full text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition">
+              🔊 點擊聽發音
+            </button>
+          `;
+
+          const btn = cardEl.querySelector('.audio-btn');
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playAudio(rawAudio, btn);
+          });
+
+          cardEl.addEventListener('click', () => {
+            playAudio(rawAudio, btn);
+          });
+
+          grid.appendChild(cardEl);
+        });
+
+      } catch (err) {
+        console.error(err);
+        loading.innerHTML = '<span class="text-rose-500">載入教材失敗，請確認 Apps Script 部署狀態。</span>';
+      }
+    }
+
+    // 初次載入字卡
+    loadFlashcards();
+  </script>
+</body>
+</html>
