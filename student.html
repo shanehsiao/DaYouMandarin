@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>Mandarin</title>
+  <title>Mandarin_V2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,11 +16,22 @@
   <header class="bg-white/80 backdrop-blur border-b border-stone-200 sticky top-0 z-40 px-4 py-3 sm:px-8 flex items-center justify-between">
     <div class="flex items-center gap-2.5">
       <span class="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></span>
-      <h1 class="text-xl sm:text-2xl font-black text-amber-950 tracking-tight">Mandarin_V1</h1>
+      <h1 class="text-xl sm:text-2xl font-black text-amber-950 tracking-tight">Mandarin</h1>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium">跟讀練習模式</span>
-      <button onclick="loadFlashcards()" title="重新同步教材" class="p-1.5 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition">
+    
+    <div class="flex items-center gap-3">
+      <!-- 模式標籤 -->
+      <span id="uiModeBadge" class="hidden sm:inline-block text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium">
+        跟讀練習模式
+      </span>
+
+      <!-- 中英語言切換按鈕 -->
+      <button onclick="toggleLanguage()" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-stone-300 bg-white hover:bg-stone-50 active:scale-95 shadow-sm text-stone-700 transition flex items-center gap-1">
+        🌐 <span id="langBtnText">EN</span>
+      </button>
+
+      <!-- 重新同步按鈕 -->
+      <button onclick="loadFlashcards()" id="refreshBtn" title="重新同步教材" class="p-1.5 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
@@ -34,7 +45,7 @@
     <!-- 左側：生字快速選單列表 (Sidebar) -->
     <aside class="w-full md:w-80 flex flex-col bg-white rounded-2xl shadow-sm border border-stone-200 p-4 h-[380px] md:h-[720px]">
       <div class="mb-3">
-        <label class="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-1.5">生字快速清單</label>
+        <label id="uiSidebarTitle" class="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-1.5">生字快速清單</label>
         <div class="relative">
           <input type="text" id="searchInput" oninput="filterCards()" placeholder="搜尋漢字、拼音或英文..." class="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 outline-none">
           <svg class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,11 +56,11 @@
 
       <!-- 清單內容 -->
       <div id="sidebarList" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-sm">
-        <div class="text-center text-stone-400 py-10 text-xs">載入清單中...</div>
+        <div id="uiLoadingList" class="text-center text-stone-400 py-10 text-xs">載入清單中...</div>
       </div>
       
       <div class="pt-3 border-t border-stone-100 text-[11px] text-stone-400 text-center">
-        共 <span id="totalCount" class="font-bold text-stone-600">0</span> 個生字
+        <span id="uiTotalPrefix">共</span> <span id="totalCount" class="font-bold text-stone-600">0</span> <span id="uiTotalSuffix">個生字</span>
       </div>
     </aside>
 
@@ -58,7 +69,7 @@
       
       <!-- 空狀態提示 -->
       <div id="emptyNotice" class="text-center py-20 text-stone-400 hidden">
-        <p class="text-sm">請從左側清單選擇要學習的生字</p>
+        <p id="uiEmptyText" class="text-sm">請從左側清單選擇要學習的生字</p>
       </div>
 
       <!-- 生字聚焦卡片 -->
@@ -71,7 +82,7 @@
             <svg class="w-10 h-10 stroke-current" fill="none" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <span>暫無插圖</span>
+            <span id="uiNoImage">暫無插圖</span>
           </div>
           
           <!-- 圖片右下角浮動播放老師發音鈕 -->
@@ -85,7 +96,7 @@
         <!-- 卡片文字區 -->
         <div class="p-6 sm:p-7 flex flex-col items-center text-center">
           
-          <!-- 拼音（與漢字一樣大） -->
+          <!-- 拼音（與漢字同為 text-5xl sm:text-6xl） -->
           <div id="cardPinyin" class="text-5xl sm:text-6xl font-black text-amber-700 tracking-wide select-none my-1">
             ---
           </div>
@@ -100,28 +111,28 @@
             ---
           </div>
 
-          <!-- 英文翻譯 -->
-          <div id="cardEnglish" class="text-xs sm:text-sm text-stone-500 font-medium mb-4">
+          <!-- 英文翻譯（比中文字小 2 號：text-3xl sm:text-4xl） -->
+          <div id="cardEnglish" class="text-3xl sm:text-4xl font-extrabold text-stone-600 my-2 tracking-tight">
             ---
           </div>
 
           <!-- 例句區塊 -->
           <div id="sentenceBox" class="w-full bg-stone-50 rounded-xl p-3 border border-stone-100 text-left mb-5">
-            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">實用例句</div>
+            <div id="uiSentenceLabel" class="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-0.5">實用例句</div>
             <p id="cardSentence" class="text-stone-700 text-xs sm:text-sm leading-relaxed">---</p>
           </div>
 
           <!-- 發音跟讀與對比控制區 -->
           <div class="w-full bg-amber-50/60 rounded-2xl p-4 border border-amber-100 flex flex-col gap-3">
             <div class="text-xs font-bold text-stone-700 flex items-center justify-between">
-              <span>口說發音演練</span>
+              <span id="uiPracticeTitle">口說發音演練</span>
               <span id="recordTimer" class="text-[11px] text-stone-400 font-mono">00:00</span>
             </div>
 
             <!-- 控制列：單純 🔊 圖示 + 錄音按鈕 -->
             <div class="flex items-center gap-2.5">
-              <!-- 教師發音按鈕（刪除文字，僅保留 🔊 符號） -->
-              <button id="teacherPlayBtn" onclick="triggerCurrentAudio()" title="聽老師標準發音" class="w-12 h-11 shrink-0 bg-white hover:bg-stone-50 active:scale-95 border border-stone-200 text-stone-800 rounded-xl text-lg shadow-sm transition flex items-center justify-center">
+              <!-- 教師發音按鈕（僅保留 🔊 符號） -->
+              <button id="teacherPlayBtn" onclick="triggerCurrentAudio()" title="聽老師發音" class="w-12 h-11 shrink-0 bg-white hover:bg-stone-50 active:scale-95 border border-stone-200 text-stone-800 rounded-xl text-lg shadow-sm transition flex items-center justify-center">
                 <span>🔊</span>
               </button>
 
@@ -135,15 +146,15 @@
             <!-- 比對播放面板（錄音完成後自動展開） -->
             <div id="comparePanel" class="hidden pt-3 border-t border-amber-200/60 flex flex-col gap-2">
               <div class="flex items-center justify-between text-[11px] text-stone-500">
-                <span>我的錄音已完成：</span>
-                <span class="text-emerald-600 font-semibold">✓ 隨時可比對</span>
+                <span id="uiRecordDone">我的錄音已完成：</span>
+                <span id="uiReadyCompare" class="text-emerald-600 font-semibold">✓ 隨時可比對</span>
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <button onclick="playStudentAudio()" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1">
-                  ▶ 聽我的發音
+                  <span id="uiListenMine">▶ 聽我的發音</span>
                 </button>
                 <button onclick="playCompareBoth()" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1">
-                  ⇄ 聽 AB 連續對比
+                  <span id="uiCompareAB">⇄ 聽 AB 連續對比</span>
                 </button>
               </div>
             </div>
@@ -162,12 +173,107 @@
 
   <script>
     // ==========================================
-    // ⚠️ 請填入你的 Google Apps Script Web App 網址
+    // ⚠️ 請替換為你的 Google Apps Script Web App 網址
     // ==========================================
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwqjU6qdPHLyL-Cd0EIwePjqhN6JTEj4ci6OOnkc2GEPjoUlYvHZkL5jAnynUSyJJe/exec';
 
     let flashcardsData = [];
     let currentIndex = 0;
+    let currentLang = localStorage.getItem('site_lang') || 'zh'; // 'zh' or 'en'
+
+    // 多語系字典定義
+    const i18n = {
+      zh: {
+        modeBadge: "跟讀練習模式",
+        langToggle: "EN",
+        refreshTip: "重新同步教材",
+        sidebarTitle: "生字快速清單",
+        searchPlaceholder: "搜尋漢字、拼音或英文...",
+        loadingList: "載入清單中...",
+        totalPrefix: "共",
+        totalSuffix: "個生字",
+        noCardsFound: "查無相符生字",
+        emptyNotice: "請從左側清單選擇要學習的生字",
+        noImage: "暫無插圖",
+        sentenceLabel: "實用例句",
+        noSentence: "（無例句）",
+        practiceTitle: "口說發音演練",
+        recordStart: "🎤 開始跟讀",
+        recordStop: "停止跟讀",
+        recordRetry: "重新跟讀",
+        recordDone: "我的錄音已完成：",
+        readyCompare: "✓ 隨時可比對",
+        listenMine: "▶ 聽我的發音",
+        compareAB: "⇄ 聽 AB 連續對比",
+        toastNoAudio: "該生字尚未錄製發音檔",
+        toastTeacherFail: "老師發音播放失敗",
+        toastRecordDone: "跟讀錄音完成！可點擊下方進行發音比對",
+        toastMicDenied: "無法取得麥克風權限，請確認瀏覽器已允許麥克風。",
+        toastNoStudentAudio: "尚未錄製個人發音",
+        toastCompareHint: "🔊 正在播放：先聽老師，再聽自己",
+        toastLoadFail: "載入教材失敗，請檢查網路連線"
+      },
+      en: {
+        modeBadge: "Practice Mode",
+        langToggle: "中文",
+        refreshTip: "Sync Cards",
+        sidebarTitle: "Word List",
+        searchPlaceholder: "Search Hanzi, Pinyin or English...",
+        loadingList: "Loading list...",
+        totalPrefix: "Total",
+        totalSuffix: "words",
+        noCardsFound: "No matching words found",
+        emptyNotice: "Please select a word from the list",
+        noImage: "No Image",
+        sentenceLabel: "Example Sentence",
+        noSentence: "(No example)",
+        practiceTitle: "Speaking Practice",
+        recordStart: "🎤 Record Voice",
+        recordStop: "Stop Recording",
+        recordRetry: "Record Again",
+        recordDone: "Recording ready:",
+        readyCompare: "✓ Ready to compare",
+        listenMine: "▶ Play Mine",
+        compareAB: "⇄ Compare (Teacher → Me)",
+        toastNoAudio: "No teacher audio for this card",
+        toastTeacherFail: "Failed to play teacher audio",
+        toastRecordDone: "Recorded! Click below to compare.",
+        toastMicDenied: "Microphone access denied. Please allow microphone permissions.",
+        toastNoStudentAudio: "Please record your voice first",
+        toastCompareHint: "🔊 Playing: Teacher first, then yours",
+        toastLoadFail: "Failed to load flashcards, check network"
+      }
+    };
+
+    function updateLanguageUI() {
+      const t = i18n[currentLang];
+      document.getElementById('langBtnText').innerText = t.langToggle;
+      document.getElementById('uiModeBadge').innerText = t.modeBadge;
+      document.getElementById('refreshBtn').title = t.refreshTip;
+      document.getElementById('uiSidebarTitle').innerText = t.sidebarTitle;
+      document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+      document.getElementById('uiTotalPrefix').innerText = t.totalPrefix;
+      document.getElementById('uiTotalSuffix').innerText = t.totalSuffix;
+      document.getElementById('uiEmptyText').innerText = t.emptyNotice;
+      document.getElementById('uiNoImage').innerText = t.noImage;
+      document.getElementById('uiSentenceLabel').innerText = t.sentenceLabel;
+      document.getElementById('uiPracticeTitle').innerText = t.practiceTitle;
+      document.getElementById('uiRecordDone').innerText = t.recordDone;
+      document.getElementById('uiReadyCompare').innerText = t.readyCompare;
+      document.getElementById('uiListenMine').innerText = t.listenMine;
+      document.getElementById('uiCompareAB').innerText = t.compareAB;
+
+      if (!isRecording) {
+        document.getElementById('recBtnText').innerText = studentAudioBlob ? t.recordRetry : t.recordStart;
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'zh' ? 'en' : 'zh';
+      localStorage.setItem('site_lang', currentLang);
+      updateLanguageUI();
+      filterCards();
+    }
 
     // 學生錄音狀態管理
     let mediaRecorder;
@@ -207,12 +313,12 @@
       return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
     }
 
-    // 播放老師發音
+    // 播放老師發音（回傳 Promise，直到音檔播完才 resolve）
     async function playTeacherAudio(audioInput) {
       const fileId = extractDriveId(audioInput);
       if (!fileId) {
-        showToast('該生字尚未錄製發音檔', true);
-        return;
+        showToast(i18n[currentLang].toastNoAudio, true);
+        return Promise.reject('No audio ID');
       }
 
       const teacherPlayBtn = document.getElementById('teacherPlayBtn');
@@ -225,33 +331,40 @@
         const result = await res.json();
 
         if (result.status !== 'success' || !result.data) {
-          throw new Error(result.message || '無法取得發音');
+          throw new Error(result.message || 'Cannot fetch audio');
         }
 
         teacherAudio.src = `data:${result.mimeType || 'audio/mpeg'};base64,${result.data}`;
         teacherPlayBtn.innerHTML = '<span>🔊</span>';
-        await teacherAudio.play();
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           teacherAudio.onended = () => {
             teacherPlayBtn.innerHTML = '<span>🔊</span>';
             teacherPlayBtn.disabled = false;
             resolve();
           };
+          teacherAudio.onerror = (e) => {
+            teacherPlayBtn.innerHTML = '<span>🔊</span>';
+            teacherPlayBtn.disabled = false;
+            resolve();
+          };
+          teacherAudio.play();
         });
 
       } catch (err) {
         console.error('老師音訊播放錯誤：', err);
-        showToast('老師發音播放失敗', true);
+        showToast(i18n[currentLang].toastTeacherFail, true);
         teacherPlayBtn.innerHTML = '<span>🔊</span>';
         teacherPlayBtn.disabled = false;
+        return Promise.reject(err);
       }
     }
 
     function triggerCurrentAudio() {
       if (flashcardsData.length > 0 && flashcardsData[currentIndex]) {
-        playTeacherAudio(flashcardsData[currentIndex].audio_url);
+        return playTeacherAudio(flashcardsData[currentIndex].audio_url);
       }
+      return Promise.reject('No card selected');
     }
 
     // --- 學生自主跟讀錄音 ---
@@ -277,18 +390,16 @@
             studentAudioUrl = URL.createObjectURL(studentAudioBlob);
             studentAudio.src = studentAudioUrl;
 
-            // 展開比對控制板
             document.getElementById('comparePanel').classList.remove('hidden');
-            showToast('跟讀錄音完成！可點擊下方進行發音比對');
+            showToast(i18n[currentLang].toastRecordDone);
           };
 
           mediaRecorder.start();
           isRecording = true;
-          recText.innerText = '停止跟讀';
+          recText.innerText = i18n[currentLang].recordStop;
           recBtn.className = 'flex-1 h-11 bg-stone-900 hover:bg-stone-800 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
           recDot.classList.add('animate-ping');
 
-          // 計時器
           recordSeconds = 0;
           timerEl.innerText = '00:00';
           recordInterval = setInterval(() => {
@@ -300,14 +411,14 @@
 
         } catch (err) {
           console.error(err);
-          showToast('無法取得麥克風權限，請確認瀏覽器已允許麥克風。', true);
+          showToast(i18n[currentLang].toastMicDenied, true);
         }
       } else {
         mediaRecorder.stop();
         mediaRecorder.stream.getTracks().forEach(track => track.stop());
         clearInterval(recordInterval);
         isRecording = false;
-        recText.innerText = '重新跟讀';
+        recText.innerText = i18n[currentLang].recordRetry;
         recBtn.className = 'flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
         recDot.classList.remove('animate-ping');
       }
@@ -316,25 +427,33 @@
     // 播放學生的發音
     function playStudentAudio() {
       if (!studentAudioUrl) {
-        showToast('尚未錄製個人發音', true);
+        showToast(i18n[currentLang].toastNoStudentAudio, true);
         return;
       }
       studentAudio.currentTime = 0;
       studentAudio.play();
     }
 
-    // AB 對比連續播放（先聽老師，間隔 0.5 秒後播放學生）
+    // AB 對比連續播放（修正：保證先播老師，播完等待 500ms，再播放學生）
     async function playCompareBoth() {
       if (!studentAudioUrl) {
-        showToast('請先完成一次錄音再進行比對', true);
+        showToast(i18n[currentLang].toastNoStudentAudio, true);
         return;
       }
-      showToast('🔊 正在播放：先聽老師，再聽自己');
-      await triggerCurrentAudio();
-      
-      setTimeout(() => {
-        playStudentAudio();
-      }, 500);
+      showToast(i18n[currentLang].toastCompareHint);
+
+      try {
+        // 1. 先播放老師音檔，並確實等待音檔 onended 結束
+        await triggerCurrentAudio();
+        
+        // 2. 老師聲音結束後，短暫間隔 500ms
+        setTimeout(() => {
+          // 3. 播放學生錄音
+          playStudentAudio();
+        }, 500);
+      } catch (e) {
+        console.warn('AB 比對中斷或失敗', e);
+      }
     }
 
     // 清除當前卡片的學生錄音
@@ -346,7 +465,7 @@
       }
       clearInterval(recordInterval);
       document.getElementById('recordTimer').innerText = '00:00';
-      document.getElementById('recBtnText').innerText = '🎤 開始跟讀';
+      document.getElementById('recBtnText').innerText = i18n[currentLang].recordStart;
       document.getElementById('recDot').classList.remove('animate-ping');
       document.getElementById('studentRecordBtn').className = 'flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5';
       document.getElementById('comparePanel').classList.add('hidden');
@@ -361,15 +480,16 @@
       currentIndex = index;
       const card = flashcardsData[index];
 
-      // 切換字卡時重置學生錄音
       resetStudentRecording();
 
-      // 更新內容
+      // 更新生字與拼音
       document.getElementById('cardHanzi').innerText = card.hanzi || '';
       document.getElementById('cardPinyin').innerText = card.pinyin || '';
       document.getElementById('cardZhuyin').innerText = card.zhuyin || '';
+      
+      // 英文翻譯
       document.getElementById('cardEnglish').innerText = card.english || '';
-      document.getElementById('cardSentence').innerText = card.sentence || '（無例句）';
+      document.getElementById('cardSentence').innerText = card.sentence || i18n[currentLang].noSentence;
 
       // 圖片切換
       const imgEl = document.getElementById('cardImage');
@@ -389,7 +509,7 @@
         placeholder.classList.remove('hidden');
       }
 
-      // 側邊欄選中樣式
+      // 側邊欄選中高亮
       document.querySelectorAll('.sidebar-item').forEach((el, i) => {
         if (i === index) {
           el.className = 'sidebar-item w-full px-3 py-2.5 rounded-xl bg-amber-500 text-white font-bold flex items-center justify-between text-xs transition cursor-pointer shadow-sm';
@@ -405,7 +525,7 @@
       list.innerHTML = '';
 
       if (cards.length === 0) {
-        list.innerHTML = '<div class="text-center text-stone-400 py-8 text-xs">查無相符生字</div>';
+        list.innerHTML = `<div class="text-center text-stone-400 py-8 text-xs">${i18n[currentLang].noCardsFound}</div>`;
         return;
       }
 
@@ -446,7 +566,7 @@
     // 從 Apps Script 讀取教材
     async function loadFlashcards() {
       const list = document.getElementById('sidebarList');
-      list.innerHTML = '<div class="text-center text-stone-400 py-10 text-xs">同步中...</div>';
+      list.innerHTML = `<div class="text-center text-stone-400 py-10 text-xs">${i18n[currentLang].loadingList}</div>`;
 
       try {
         const res = await fetch(SCRIPT_URL);
@@ -455,7 +575,7 @@
         document.getElementById('totalCount').innerText = flashcardsData.length;
 
         if (flashcardsData.length === 0) {
-          list.innerHTML = '<div class="text-center text-stone-400 py-10 text-xs">目前無教材</div>';
+          list.innerHTML = `<div class="text-center text-stone-400 py-10 text-xs">${i18n[currentLang].noCardsFound}</div>`;
           document.getElementById('focusCard').classList.add('hidden');
           document.getElementById('emptyNotice').classList.remove('hidden');
           return;
@@ -469,11 +589,13 @@
 
       } catch (err) {
         console.error(err);
-        showToast('載入教材失敗，請檢查網路連線', true);
-        list.innerHTML = '<div class="text-center text-rose-500 py-10 text-xs">載入失敗</div>';
+        showToast(i18n[currentLang].toastLoadFail, true);
+        list.innerHTML = '<div class="text-center text-rose-500 py-10 text-xs">Load Failed</div>';
       }
     }
 
+    // 初始化介面語系與載入資料
+    updateLanguageUI();
     loadFlashcards();
   </script>
 </body>
